@@ -56,4 +56,17 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "درخواست با موفقیت ثبت شد.",
-      task
+      task: result[0]
+    });
+  } catch (error) {
+    console.error("Task creation error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "ثبت درخواست انجام نشد."
+      },
+      { status: 500 }
+    );
+  }
+}
