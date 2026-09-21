@@ -710,4 +710,4 @@ function ProposalForm({
       )}
     </section>
   );
-              }
+}
