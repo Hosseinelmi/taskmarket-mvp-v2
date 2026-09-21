@@ -14,12 +14,18 @@ type TaskResponse = {
   tracking_code: string;
 };
 
+type ProposalFormProps = {
+  taskId: number;
+  providerId: number;
+};
+
 function analyzeTask(text: string): TaskResult {
   const value = text.toLowerCase();
 
   if (
     value.includes("پرینتر") ||
     value.includes("لپ تاپ") ||
+    value.includes("لپ‌تاپ") ||
     value.includes("کامپیوتر") ||
     value.includes("مودم") ||
     value.includes("اینترنت") ||
@@ -29,7 +35,7 @@ function analyzeTask(text: string): TaskResult {
       category: "فناوری اطلاعات",
       skill: "تعمیر و پشتیبانی IT",
       urgency: "عادی",
-      mode: "حضوری یا آنلاین"
+      mode: "حضوری یا آنلاین",
     };
   }
 
@@ -44,7 +50,7 @@ function analyzeTask(text: string): TaskResult {
       category: "تعمیرات",
       skill: "تعمیر لوازم و تجهیزات",
       urgency: "عادی",
-      mode: "حضوری"
+      mode: "حضوری",
     };
   }
 
@@ -53,13 +59,14 @@ function analyzeTask(text: string): TaskResult {
     value.includes("پاورپوینت") ||
     value.includes("ترجمه") ||
     value.includes("تحقیق") ||
-    value.includes("برنامه نویسی")
+    value.includes("برنامه نویسی") ||
+    value.includes("برنامه‌نویسی")
   ) {
     return {
       category: "خدمات تخصصی",
       skill: "خدمات دانش و مهارت",
       urgency: "عادی",
-      mode: "آنلاین"
+      mode: "آنلاین",
     };
   }
 
@@ -67,7 +74,7 @@ function analyzeTask(text: string): TaskResult {
     category: "خدمات",
     skill: "نیاز به بررسی",
     urgency: "عادی",
-    mode: "قابل تعیین"
+    mode: "قابل تعیین",
   };
 }
 
@@ -75,8 +82,8 @@ export default function HomePage() {
   const [task, setTask] = useState("");
   const [result, setResult] = useState<TaskResult | null>(null);
 
-  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const [trackingCode, setTrackingCode] = useState("");
   const [taskId, setTaskId] = useState<number | null>(null);
@@ -84,7 +91,10 @@ export default function HomePage() {
   const [error, setError] = useState("");
 
   function handleAnalyze() {
-    if (!task.trim()) return;
+    if (!task.trim()) {
+      setError("لطفاً ابتدا درخواست خود را وارد کنید.");
+      return;
+    }
 
     const analysis = analyzeTask(task);
 
@@ -96,7 +106,9 @@ export default function HomePage() {
   }
 
   async function handleSubmit() {
-    if (!task.trim() || !result || loading) return;
+    if (!task.trim() || !result || loading) {
+      return;
+    }
 
     setLoading(true);
     setSubmitted(false);
@@ -108,13 +120,13 @@ export default function HomePage() {
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: task.trim().slice(0, 200),
           description: task.trim(),
-          category: result.category
-        })
+          category: result.category,
+        }),
       });
 
       const data = await response.json();
@@ -129,9 +141,9 @@ export default function HomePage() {
 
       setSubmitted(true);
       setTrackingCode(savedTask.tracking_code);
-      setTaskId(savedTask.id);
+      setTaskId(Number(savedTask.id));
     } catch (err) {
-      console.error(err);
+      console.error("Task submission error:", err);
 
       setError(
         err instanceof Error
@@ -148,30 +160,30 @@ export default function HomePage() {
       style={{
         minHeight: "100vh",
         padding: "40px 20px",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
           maxWidth: 900,
-          margin: "0 auto"
+          margin: "0 auto",
         }}
       >
         <header
           style={{
             textAlign: "center",
-            marginBottom: 40
+            marginBottom: 40,
           }}
         >
           <div
             style={{
               display: "inline-block",
               background: "#172033",
-              color: "white",
+              color: "#ffffff",
               padding: "8px 18px",
               borderRadius: 30,
               fontSize: 14,
-              marginBottom: 20
+              marginBottom: 20,
             }}
           >
             TaskMarket
@@ -181,7 +193,7 @@ export default function HomePage() {
             style={{
               fontSize: "clamp(32px, 6vw, 56px)",
               margin: "10px 0",
-              lineHeight: 1.3
+              lineHeight: 1.3,
             }}
           >
             هر کاری داری، فقط بگو
@@ -191,7 +203,7 @@ export default function HomePage() {
             style={{
               fontSize: 20,
               color: "#667085",
-              lineHeight: 1.8
+              lineHeight: 1.8,
             }}
           >
             ما آدم مناسبش را پیدا می‌کنیم.
@@ -200,24 +212,26 @@ export default function HomePage() {
 
         <section
           style={{
-            background: "white",
+            background: "#ffffff",
             borderRadius: 24,
             padding: 30,
-            boxShadow: "0 10px 35px rgba(0,0,0,0.08)"
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
           }}
         >
           <label
+            htmlFor="task"
             style={{
               display: "block",
               fontSize: 18,
               fontWeight: 700,
-              marginBottom: 12
+              marginBottom: 12,
             }}
           >
             چه کاری می‌خواهی انجام شود؟
           </label>
 
           <textarea
+            id="task"
             value={task}
             onChange={(e) => setTask(e.target.value)}
             placeholder="مثلاً: پرینترم کار نمی‌کند، دنبال کسی هستم که تعمیرش کند."
@@ -231,11 +245,12 @@ export default function HomePage() {
               fontSize: 17,
               lineHeight: 1.8,
               resize: "vertical",
-              fontFamily: "Tahoma, Arial, sans-serif"
+              fontFamily: "Tahoma, Arial, sans-serif",
             }}
           />
 
           <button
+            type="button"
             onClick={handleAnalyze}
             disabled={!task.trim()}
             style={{
@@ -244,15 +259,15 @@ export default function HomePage() {
               padding: 16,
               border: 0,
               borderRadius: 14,
-              background: !task.trim()
-                ? "#cbd5e1"
-                : "#172033",
-              color: "white",
+              background: task.trim()
+                ? "#172033"
+                : "#cbd5e1",
+              color: "#ffffff",
               fontSize: 17,
               fontWeight: 700,
-              cursor: !task.trim()
-                ? "not-allowed"
-                : "pointer"
+              cursor: task.trim()
+                ? "pointer"
+                : "not-allowed",
             }}
           >
             تحلیل درخواست
@@ -264,26 +279,22 @@ export default function HomePage() {
                 marginTop: 24,
                 background: "#f8fafc",
                 borderRadius: 20,
-                padding: 24
+                padding: 24,
               }}
             >
               <h2
                 style={{
                   marginTop: 0,
-                  marginBottom: 20
+                  marginBottom: 20,
                 }}
               >
                 تحلیل درخواست
               </h2>
 
-              <p>
-                <strong>برداشت اولیه TaskMarket</strong>
-              </p>
-
               <div
                 style={{
                   display: "grid",
-                  gap: 12
+                  gap: 12,
                 }}
               >
                 <InfoRow
@@ -308,6 +319,7 @@ export default function HomePage() {
               </div>
 
               <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={loading || submitted}
                 style={{
@@ -320,13 +332,13 @@ export default function HomePage() {
                     loading || submitted
                       ? "#94a3b8"
                       : "#2563eb",
-                  color: "white",
+                  color: "#ffffff",
                   fontSize: 17,
                   fontWeight: 700,
                   cursor:
                     loading || submitted
                       ? "default"
-                      : "pointer"
+                      : "pointer",
                 }}
               >
                 {loading
@@ -345,24 +357,20 @@ export default function HomePage() {
                 padding: 22,
                 borderRadius: 18,
                 background: "#ecfdf3",
-                color: "#166534"
+                color: "#166534",
               }}
             >
               <div
                 style={{
                   fontSize: 18,
                   fontWeight: 700,
-                  marginBottom: 12
+                  marginBottom: 12,
                 }}
               >
                 ✅ درخواست شما با موفقیت ثبت شد.
               </div>
 
-              <div
-                style={{
-                  marginBottom: 8
-                }}
-              >
+              <div style={{ marginBottom: 8 }}>
                 کد پیگیری شما:
               </div>
 
@@ -372,10 +380,10 @@ export default function HomePage() {
                   fontWeight: 800,
                   direction: "ltr",
                   textAlign: "center",
-                  background: "white",
+                  background: "#ffffff",
                   padding: 12,
                   borderRadius: 12,
-                  letterSpacing: 1
+                  letterSpacing: 1,
                 }}
               >
                 {trackingCode}
@@ -384,7 +392,7 @@ export default function HomePage() {
               <p
                 style={{
                   marginBottom: 0,
-                  lineHeight: 1.8
+                  lineHeight: 1.8,
                 }}
               >
                 این کد را برای پیگیری درخواست خود نگه دارید.
@@ -399,7 +407,8 @@ export default function HomePage() {
                 padding: 16,
                 borderRadius: 14,
                 background: "#fef2f2",
-                color: "#b91c1c"
+                color: "#b91c1c",
+                lineHeight: 1.8,
               }}
             >
               ❌ {error}
@@ -420,7 +429,7 @@ export default function HomePage() {
             marginTop: 40,
             paddingBottom: 30,
             color: "#667085",
-            fontSize: 14
+            fontSize: 14,
           }}
         >
           TaskMarket — AI-first Task Marketplace
@@ -432,7 +441,7 @@ export default function HomePage() {
 
 function InfoRow({
   label,
-  value
+  value,
 }: {
   label: string;
   value: string;
@@ -444,15 +453,15 @@ function InfoRow({
         justifyContent: "space-between",
         alignItems: "center",
         gap: 20,
-        background: "white",
+        background: "#ffffff",
         padding: "14px 16px",
         borderRadius: 12,
-        border: "1px solid #eaecf0"
+        border: "1px solid #eaecf0",
       }}
     >
       <span
         style={{
-          color: "#667085"
+          color: "#667085",
         }}
       >
         {label}
@@ -465,11 +474,8 @@ function InfoRow({
 
 function ProposalForm({
   taskId,
-  providerId
-}: {
-  taskId: number;
-  providerId: number;
-}) {
+  providerId,
+}: ProposalFormProps) {
   const [price, setPrice] = useState("");
   const [days, setDays] = useState("2");
   const [message, setMessage] = useState("");
@@ -497,15 +503,15 @@ function ProposalForm({
       const response = await fetch("/api/proposals", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           task_id: taskId,
           provider_id: providerId,
           price: Number(price),
           estimated_days: Number(days),
-          message: message.trim()
-        })
+          message: message.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -518,7 +524,7 @@ function ProposalForm({
 
       setSuccess(true);
     } catch (err) {
-      console.error(err);
+      console.error("Proposal submission error:", err);
 
       setError(
         err instanceof Error
@@ -533,41 +539,39 @@ function ProposalForm({
   return (
     <section
       style={{
-        background: "white",
+        background: "#ffffff",
         marginTop: 24,
         borderRadius: 24,
         padding: 30,
-        boxShadow: "0 10px 35px rgba(0,0,0,0.06)"
+        boxShadow: "0 10px 35px rgba(0,0,0,0.06)",
       }}
     >
-      <h2
-        style={{
-          marginTop: 0
-        }}
-      >
+      <h2 style={{ marginTop: 0 }}>
         ثبت پیشنهاد انجام‌دهنده
       </h2>
 
       <p
         style={{
           color: "#667085",
-          lineHeight: 1.8
+          lineHeight: 1.8,
         }}
       >
         تعمیرکار تست — تعمیر و پشتیبانی IT
       </p>
 
       <label
+        htmlFor="price"
         style={{
           display: "block",
           fontWeight: 700,
-          marginTop: 20
+          marginTop: 20,
         }}
       >
         مبلغ پیشنهادی (تومان)
       </label>
 
       <input
+        id="price"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
         type="number"
@@ -581,21 +585,23 @@ function ProposalForm({
           border: "1px solid #d0d5dd",
           borderRadius: 12,
           fontSize: 16,
-          fontFamily: "inherit"
+          fontFamily: "inherit",
         }}
       />
 
       <label
+        htmlFor="days"
         style={{
           display: "block",
           marginTop: 16,
-          fontWeight: 700
+          fontWeight: 700,
         }}
       >
         زمان انجام (روز)
       </label>
 
       <input
+        id="days"
         value={days}
         onChange={(e) => setDays(e.target.value)}
         type="number"
@@ -608,21 +614,23 @@ function ProposalForm({
           border: "1px solid #d0d5dd",
           borderRadius: 12,
           fontSize: 16,
-          fontFamily: "inherit"
+          fontFamily: "inherit",
         }}
       />
 
       <label
+        htmlFor="message"
         style={{
           display: "block",
           marginTop: 16,
-          fontWeight: 700
+          fontWeight: 700,
         }}
       >
         توضیحات پیشنهاد
       </label>
 
       <textarea
+        id="message"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={4}
@@ -637,11 +645,12 @@ function ProposalForm({
           fontSize: 16,
           resize: "vertical",
           fontFamily: "inherit",
-          lineHeight: 1.8
+          lineHeight: 1.8,
         }}
       />
 
       <button
+        type="button"
         onClick={submitProposal}
         disabled={loading || success}
         style={{
@@ -654,13 +663,13 @@ function ProposalForm({
             loading || success
               ? "#94a3b8"
               : "#2563eb",
-          color: "white",
+          color: "#ffffff",
           fontSize: 17,
           fontWeight: 700,
           cursor:
             loading || success
               ? "default"
-              : "pointer"
+              : "pointer",
         }}
       >
         {loading
@@ -678,7 +687,7 @@ function ProposalForm({
             borderRadius: 12,
             background: "#ecfdf3",
             color: "#166534",
-            lineHeight: 1.8
+            lineHeight: 1.8,
           }}
         >
           ✅ پیشنهاد با موفقیت ثبت شد.
@@ -693,7 +702,7 @@ function ProposalForm({
             borderRadius: 12,
             background: "#fef2f2",
             color: "#b91c1c",
-            lineHeight: 1.8
+            lineHeight: 1.8,
           }}
         >
           ❌ {error}
@@ -701,4 +710,4 @@ function ProposalForm({
       )}
     </section>
   );
-}
+              }
