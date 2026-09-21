@@ -71,6 +71,9 @@ export default function HomePage() {
   const [task, setTask] = useState("");
   const [result, setResult] = useState<TaskResult | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [trackingCode, setTrackingCode] = useState("");
+  const [error, setError] = useState("");
 
   function handleAnalyze() {
     if (!task.trim()) return;
@@ -79,12 +82,52 @@ export default function HomePage() {
 
     setResult(analysis);
     setSubmitted(false);
+    setTrackingCode("");
+    setError("");
   }
 
-  function handleSubmit() {
-    if (!task.trim()) return;
+  async function handleSubmit() {
+    if (!task.trim() || !result || loading) return;
 
-    setSubmitted(true);
+    setLoading(true);
+    setSubmitted(false);
+    setTrackingCode("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: task.trim().slice(0, 200),
+          description: task.trim(),
+          category: result.category
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "ثبت درخواست انجام نشد."
+        );
+      }
+
+      setSubmitted(true);
+      setTrackingCode(data.task.tracking_code);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "خطایی در ثبت درخواست رخ داد."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -128,7 +171,7 @@ export default function HomePage() {
               lineHeight: 1.3
             }}
           >
-            هر کاری داری،222 فقط بگو
+            هر کاری داری، فقط بگو
           </h1>
 
           <p
@@ -249,37 +292,81 @@ export default function HomePage() {
 
             <button
               onClick={handleSubmit}
+              disabled={loading}
               style={{
                 width: "100%",
                 marginTop: 24,
                 padding: 16,
                 border: 0,
                 borderRadius: 14,
-                background: "#16a34a",
+                background: loading
+                  ? "#86efac"
+                  : "#16a34a",
                 color: "white",
                 fontSize: 17,
                 fontWeight: 700,
-                cursor: "pointer"
+                cursor: loading
+                  ? "wait"
+                  : "pointer"
               }}
             >
-              ثبت درخواست
+              {loading
+                ? "در حال ثبت درخواست..."
+                : "ثبت درخواست"}
             </button>
 
             {submitted && (
               <div
                 style={{
                   marginTop: 20,
-                  padding: 18,
+                  padding: 20,
                   borderRadius: 14,
                   background: "#ecfdf3",
                   color: "#166534",
+                  lineHeight: 1.9
+                }}
+              >
+                <strong>
+                  ✅ درخواست شما با موفقیت ثبت شد.
+                </strong>
+
+                <br />
+
+                کد پیگیری شما:
+
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: 12,
+                    background: "white",
+                    borderRadius: 10,
+                    textAlign: "center",
+                    fontSize: 22,
+                    fontWeight: 800,
+                    letterSpacing: 1
+                  }}
+                >
+                  {trackingCode}
+                </div>
+
+                <div style={{ marginTop: 10 }}>
+                  این کد را برای پیگیری درخواست خود نگه دارید.
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div
+                style={{
+                  marginTop: 20,
+                  padding: 18,
+                  borderRadius: 14,
+                  background: "#fef2f2",
+                  color: "#b91c1c",
                   lineHeight: 1.8
                 }}
               >
-                درخواست شما با موفقیت ثبت شد.
-                <br />
-                در مرحله بعد متخصصان مناسب می‌توانند
-                پیشنهاد خود را ارسال کنند.
+                ❌ {error}
               </div>
             )}
           </section>
